@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_comparison(original, reconstructions, ranks, path):
@@ -152,6 +153,35 @@ def plot_rank_vs_quality(ranks, mses, psnrs, energies, ratios, path):
     ax4.set_title("Rank vs Compression Ratio")
     ax4.grid(True, alpha=0.3)
 
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+
+
+def plot_error(original, reconstructed, path):
+    """Save an absolute pixel-difference visualization between two images.
+
+    The pixel-wise absolute difference is normalized to [0, 1] and saved as a
+    heatmap where brighter regions indicate larger reconstruction error.
+
+    Args:
+        original: 2-D float array in [0, 1] (grayscale image).
+        reconstructed: 2-D float array matching ``original``.
+        path: output file path for the figure.
+    """
+    error = np.abs(original - reconstructed)
+    max_err = error.max()
+    if max_err > 0:
+        normalized = error / max_err
+    else:
+        normalized = error
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    im = ax.imshow(normalized, cmap="hot", vmin=0, vmax=1)
+    ax.set_title("Reconstruction Error (|original - reconstructed|)")
+    ax.set_xlabel("Column")
+    ax.set_ylabel("Row")
+    fig.colorbar(im, ax=ax, label="Normalized error")
     fig.tight_layout()
     fig.savefig(path, dpi=100)
     plt.close(fig)

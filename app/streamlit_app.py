@@ -19,7 +19,7 @@ import streamlit as st
 from src.image_utils import load_image, save_image, to_grayscale
 from src.svd_compression import svd_compress, _svd_rank_k
 from src.metrics import analysis_table
-from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values, plot_rank_vs_quality
+from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values, plot_rank_vs_quality, plot_error
 
 RESULT_DIR = os.path.join("results", "reconstructed")
 
@@ -73,6 +73,11 @@ def mode_single(image):
 
         save_image(image, os.path.join(RESULT_DIR, "sample_original.png"))
         save_image(compressed, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
+
+        error_path = os.path.join(RESULT_DIR, f"error_k{k}.png")
+        plot_error(image, compressed, error_path)
+        st.markdown("### Reconstruction Error")
+        st.image(error_path, caption="Absolute pixel difference (|original - reconstructed|)")
 
 
 def mode_compare(image):
