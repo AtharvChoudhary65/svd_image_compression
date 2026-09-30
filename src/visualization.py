@@ -1,0 +1,62 @@
+"""Plotting helpers for SVD image compression comparison."""
+
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+
+
+def plot_comparison(original, reconstructions, ranks, path):
+    """Save a side-by-side figure comparing the original to rank-k reconstructions.
+
+    Args:
+        original: 2-D float array in [0, 1] (grayscale image).
+        reconstructions: list of 2-D float arrays matching ``original``.
+        ranks: list of rank labels (one per reconstruction).
+        path: output file path for the figure.
+    """
+    n = len(reconstructions) + 1
+    fig, axes = plt.subplots(1, n, figsize=(2.5 * n, 3))
+    if n == 1:
+        axes = [axes]
+
+    axes[0].imshow(original, cmap="gray", vmin=0, vmax=1)
+    axes[0].set_title("Original")
+    axes[0].axis("off")
+
+    for i, (img, k) in enumerate(zip(reconstructions, ranks)):
+        axes[i + 1].imshow(img, cmap="gray", vmin=0, vmax=1)
+        axes[i + 1].set_title(f"rank = {k}")
+        axes[i + 1].axis("off")
+
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+
+
+def plot_metric_curves(ranks, mses, psnrs, path):
+    """Save a two-panel plot: rank vs MSE and rank vs PSNR.
+
+    Args:
+        ranks: list of rank values.
+        mses: list of MSE values (one per rank).
+        psnrs: list of PSNR values (one per rank).
+        path: output file path for the figure.
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.5))
+
+    ax1.plot(ranks, mses, "o-", color="tab:blue")
+    ax1.set_xlabel("Rank")
+    ax1.set_ylabel("MSE")
+    ax1.set_title("Rank vs MSE")
+    ax1.grid(True, alpha=0.3)
+
+    ax2.plot(ranks, psnrs, "o-", color="tab:orange")
+    ax2.set_xlabel("Rank")
+    ax2.set_ylabel("PSNR (dB)")
+    ax2.set_title("Rank vs PSNR")
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
