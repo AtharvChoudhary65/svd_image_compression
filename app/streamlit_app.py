@@ -210,6 +210,28 @@ def mode_analysis(image):
             unsafe_allow_html=True,
         )
 
+        # Tuned Tradeoff Analysis
+        st.markdown("### Tuned Tradeoff Analysis")
+        summary = [
+            {
+                "Rank": r["rank"],
+                "MSE": f"{r['mse']:.4f}",
+                "PSNR (dB)": f"{r['psnr']:.2f}",
+                "Retained Energy": f"{r['retained_energy']*100:.1f}%",
+                "Compression Ratio": f"{r['compression_ratio']:.1f}×",
+            }
+            for r in results
+        ]
+        st.dataframe(summary, use_container_width=True, hide_index=True)
+        st.markdown(
+            "<small>The rank parameter k controls a tradeoff: higher k yields "
+            "smaller reconstruction error (MSE), higher PSNR, and greater "
+            "retained energy, at the cost of a lower compression ratio. These "
+            "are observed relationships from the current image, not universal "
+            "optima for all images.</small>",
+            unsafe_allow_html=True,
+        )
+
 
 def main():
     st.title("SVD Image Compression")
