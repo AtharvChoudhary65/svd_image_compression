@@ -113,3 +113,45 @@ def plot_singular_values(singular_values, path):
     fig.tight_layout()
     fig.savefig(path, dpi=100)
     plt.close(fig)
+
+
+def plot_rank_vs_quality(ranks, mses, psnrs, energies, ratios, path):
+    """Save a four-panel figure: rank vs MSE, PSNR, retained energy, and ratio.
+
+    Args:
+        ranks: list of rank values.
+        mses: list of MSE values (one per rank).
+        psnrs: list of PSNR values (one per rank).
+        energies: list of retained-energy fractions in [0, 1] (one per rank).
+        ratios: list of compression-ratio values (one per rank).
+        path: output file path for the figure.
+    """
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10, 7))
+
+    ax1.plot(ranks, mses, "o-", color="tab:blue")
+    ax1.set_xlabel("Rank")
+    ax1.set_ylabel("MSE")
+    ax1.set_title("Rank vs MSE")
+    ax1.grid(True, alpha=0.3)
+
+    ax2.plot(ranks, psnrs, "o-", color="tab:orange")
+    ax2.set_xlabel("Rank")
+    ax2.set_ylabel("PSNR (dB)")
+    ax2.set_title("Rank vs PSNR")
+    ax2.grid(True, alpha=0.3)
+
+    ax3.plot(ranks, [e * 100 for e in energies], "o-", color="tab:green")
+    ax3.set_xlabel("Rank")
+    ax3.set_ylabel("Retained Energy (%)")
+    ax3.set_title("Rank vs Retained Energy")
+    ax3.grid(True, alpha=0.3)
+
+    ax4.plot(ranks, ratios, "o-", color="tab:red")
+    ax4.set_xlabel("Rank")
+    ax4.set_ylabel("Compression Ratio")
+    ax4.set_title("Rank vs Compression Ratio")
+    ax4.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)

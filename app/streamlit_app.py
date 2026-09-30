@@ -19,7 +19,7 @@ import streamlit as st
 from src.image_utils import load_image, save_image, to_grayscale
 from src.svd_compression import svd_compress
 from src.metrics import analysis_table
-from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values
+from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values, plot_rank_vs_quality
 
 RESULT_DIR = os.path.join("results", "reconstructed")
 
@@ -183,6 +183,20 @@ def mode_analysis(image):
 
         st.markdown("### Rank vs MSE / PSNR / Compression Ratio")
         st.image(fig_path, caption="Compression analysis figure")
+
+        # Rank vs quality experiment
+        rq_path = os.path.join(RESULT_DIR, "rank_vs_quality.png")
+        energies = [r["retained_energy"] for r in results]
+        plot_rank_vs_quality(ranks, mses, psnrs, energies, ratios, rq_path)
+        st.markdown("### Rank vs Quality Experiment")
+        st.image(rq_path, caption="Rank vs MSE / PSNR / Retained Energy / Compression Ratio")
+        st.markdown(
+            "<small>As k increases, more singular components are retained. This "
+            "generally reduces reconstruction error, increases PSNR and retained "
+            "energy, and reduces the compression ratio. These are observed "
+            "relationships from the experiment, not guarantees for every image.</small>",
+            unsafe_allow_html=True,
+        )
 
         st.markdown(
             "<small>Increasing k retains more singular components, which generally "
