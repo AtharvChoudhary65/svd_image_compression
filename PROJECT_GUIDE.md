@@ -76,9 +76,29 @@ PNG files in `results/reconstructed/`.
 ## 5. Extending
 
 - `matplotlib>=3.7.0` for the comparison and metric-curve figures.
+- `streamlit>=1.30.0` for the optional Streamlit app under `app/`.
 - Add a notebook in `notebooks/` that plots the singular-value spectrum and PSNR vs. `k`.
 - Try a per-channel RGB variant by skipping the grayscale conversion.
 - Add a front-end under `app/` behind an explicit, opt-in choice of framework.
+
+### Streamlit app
+
+A minimal Streamlit app is included for interactive exploration:
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+It reuses all `src/` modules and offers three modes:
+
+1. **Single Reconstruction** — upload an image, choose one rank `k`, view original vs.
+   reconstructed with MSE / PSNR / compression ratio.
+2. **Compare Ranks** — upload an image, enter multiple comma-separated ranks, view all
+   reconstructions with a metrics table.
+3. **Compression Analysis** — upload an image, sweep a rank range, view the analysis table
+   and the `analysis.png` figure (rank vs ratio / PSNR / MSE).
+
+The app writes reconstructed outputs to `results/reconstructed/` just like the CLI demo.
 
 ## 6. Notes / limitations
 
