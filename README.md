@@ -187,6 +187,3 @@ The appropriate rank depends on the desired trade-off between image quality and 
 - No automatic optimal-rank selection is provided.
 - This is an educational project, not a production image codec.
 
-## License
-
-This project is released for educational purposes. See the repository for license details.

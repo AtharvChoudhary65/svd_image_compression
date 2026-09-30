@@ -92,4 +92,3 @@ Validations:
 - Operates on a single grayscale matrix (color is reduced to luminance).
 - Compression ratio is a representation-based metric, not a comparison against JPEG/PNG file sizes.
 - No automatic optimal-rank selection is provided.
-- Educational implementation, not a production image codec.
