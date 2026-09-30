@@ -17,7 +17,7 @@ import numpy as np
 import streamlit as st
 
 from src.image_utils import load_image, save_image, to_grayscale
-from src.svd_compression import svd_compress
+from src.svd_compression import svd_compress, _svd_rank_k
 from src.metrics import analysis_table
 from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values, plot_rank_vs_quality
 

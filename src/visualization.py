@@ -155,3 +155,31 @@ def plot_rank_vs_quality(ranks, mses, psnrs, energies, ratios, path):
     fig.tight_layout()
     fig.savefig(path, dpi=100)
     plt.close(fig)
+
+
+def plot_reconstruction_comparison(original, reconstructions, ranks, path):
+    """Save a side-by-side figure comparing the original to rank-k reconstructions.
+
+    Args:
+        original: 2-D float array in [0, 1] (grayscale image).
+        reconstructions: list of 2-D float arrays matching ``original``.
+        ranks: list of rank labels (one per reconstruction).
+        path: output file path for the figure.
+    """
+    n = len(reconstructions) + 1
+    fig, axes = plt.subplots(1, n, figsize=(2.5 * n, 3))
+    if n == 1:
+        axes = [axes]
+
+    axes[0].imshow(original, cmap="gray", vmin=0, vmax=1)
+    axes[0].set_title("Original")
+    axes[0].axis("off")
+
+    for i, (img, k) in enumerate(zip(reconstructions, ranks)):
+        axes[i + 1].imshow(img, cmap="gray", vmin=0, vmax=1)
+        axes[i + 1].set_title(f"rank = {k}")
+        axes[i + 1].axis("off")
+
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
