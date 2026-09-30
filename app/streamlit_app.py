@@ -19,7 +19,7 @@ import streamlit as st
 from src.image_utils import load_image, save_image, to_grayscale
 from src.svd_compression import svd_compress
 from src.metrics import analysis_table
-from src.visualization import plot_comparison, plot_metric_curves, plot_analysis
+from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values
 
 RESULT_DIR = os.path.join("results", "reconstructed")
 
@@ -151,7 +151,10 @@ def mode_analysis(image):
         return
 
     if st.button("Run Analysis", type="primary"):
-        results = analysis_table(image, ranks)
+        # Compute singular values once; reuse for both metrics and plot
+        max_k_for_svd = max(ranks)
+        _, singular_values = svd_compress(image, max_k_for_svd)
+        results = analysis_table(image, ranks, singular_values)
 
         os.makedirs(RESULT_DIR, exist_ok=True)
         ratios = [r["compression_ratio"] for r in results]
@@ -160,6 +163,20 @@ def mode_analysis(image):
         fig_path = os.path.join(RESULT_DIR, "analysis.png")
         plot_analysis(ranks, ratios, mses, psnrs, fig_path)
         plot_metric_curves(ranks, mses, psnrs, os.path.join(RESULT_DIR, "metric_curves.png"))
+        sv_path = os.path.join(RESULT_DIR, "singular_values.png")
+        plot_singular_values(singular_values, sv_path)
+
+        st.markdown("### Singular Value Spectrum")
+        st.markdown(
+            "<small>Singular values are ordered from largest to smallest. "
+            "Large values indicate components that contribute more strongly to the image "
+            "representation. Keeping only the first k components uses the largest singular "
+            "values and discards the remaining components. Retained energy measures the "
+            "fraction of total squared singular-value energy captured by the first k "
+            "components.</small>",
+            unsafe_allow_html=True,
+        )
+        st.image(sv_path, caption="Singular value spectrum")
 
         st.markdown("### Analysis Table")
         st.dataframe(results, use_container_width=True, hide_index=True)

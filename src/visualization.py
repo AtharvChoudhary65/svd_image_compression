@@ -89,3 +89,27 @@ def plot_analysis(ranks, ratios, mses, psnrs, path):
     fig.tight_layout()
     fig.savefig(path, dpi=100)
     plt.close(fig)
+
+
+def plot_singular_values(singular_values, path):
+    """Save a plot of the singular-value spectrum.
+
+    Args:
+        singular_values: 1-D array of singular values (descending order).
+        path: output file path for the figure.
+    """
+    fig, ax = plt.subplots(figsize=(8, 3))
+    ax.plot(
+        range(1, len(singular_values) + 1),
+        singular_values,
+        "o-",
+        markersize=2,
+        color="tab:blue",
+    )
+    ax.set_xlabel("Singular Component")
+    ax.set_ylabel("Singular Value")
+    ax.set_title("Singular Value Spectrum")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)

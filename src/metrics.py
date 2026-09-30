@@ -49,12 +49,15 @@ def retained_energy(singular_values, k):
     return float(np.sum(squared[:k]) / np.sum(squared))
 
 
-def analysis_table(image, ranks):
+def analysis_table(image, ranks, singular_values=None):
     """Compute compression-analysis metrics for each rank.
 
     Args:
         image: 2-D grayscale float array in [0, 1].
         ranks: iterable of positive rank values (already validated).
+        singular_values: Optional pre-computed singular values from SVD.
+            When provided, these are reused for the retained-energy calculation
+            and the rank-k reconstruction is still computed via svd_compress.
 
     Returns:
         List of dicts with keys ``rank``, ``compression_ratio``, ``mse``,
@@ -64,9 +67,14 @@ def analysis_table(image, ranks):
 
     height, width = image.shape[:2]
     channels = 1
+
+    # Compute singular values once if not provided
+    if singular_values is None:
+        _, singular_values = svd_compress(image, max(ranks))
+
     results = []
     for k in ranks:
-        compressed, singular_values = svd_compress(image, k)
+        compressed, _ = svd_compress(image, k)
         results.append(
             {
                 "rank": k,
