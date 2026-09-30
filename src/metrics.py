@@ -23,6 +23,32 @@ def compression_ratio(height, width, channels, k):
     return original / compressed
 
 
+def retained_energy(singular_values, k):
+    """Return the fraction of total energy retained by the top k singular values.
+
+    Retained energy = sum(sigma_i^2 for i in 1..k) / sum(sigma_i^2 for all i).
+
+    This gives a measure of how much information is preserved by a rank-k
+    approximation of the SVD, independent of image dimensions.
+
+    Args:
+        singular_values: 1-D array of singular values (typically s from ``np.linalg.svd``).
+        k: number of top singular values retained (must be positive and
+            not exceed ``len(singular_values)``).
+
+    Returns:
+        Float in [0, 1] representing the fraction of total energy retained.
+    """
+    singular_values = np.asarray(singular_values, dtype=np.float64)
+    total = singular_values.shape[0]
+    if k <= 0:
+        raise ValueError(f"k must be a positive integer, got {k}.")
+    if k > total:
+        raise ValueError(f"k ({k}) exceeds the number of singular values ({total}).")
+    squared = singular_values ** 2
+    return float(np.sum(squared[:k]) / np.sum(squared))
+
+
 def analysis_table(image, ranks):
     """Compute compression-analysis metrics for each rank.
 
@@ -32,7 +58,7 @@ def analysis_table(image, ranks):
 
     Returns:
         List of dicts with keys ``rank``, ``compression_ratio``, ``mse``,
-        ``psnr``, one per rank, preserving order.
+        ``psnr``, ``retained_energy``, one per rank, preserving order.
     """
     from src.svd_compression import svd_compress
 
@@ -40,13 +66,14 @@ def analysis_table(image, ranks):
     channels = 1
     results = []
     for k in ranks:
-        compressed, _ = svd_compress(image, k)
+        compressed, singular_values = svd_compress(image, k)
         results.append(
             {
                 "rank": k,
                 "compression_ratio": compression_ratio(height, width, channels, k),
                 "mse": mean_squared_error(image, compressed),
                 "psnr": peak_signal_noise_ratio(image, compressed),
+                "retained_energy": retained_energy(singular_values, k),
             }
         )
     return results

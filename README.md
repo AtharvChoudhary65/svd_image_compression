@@ -14,7 +14,7 @@ src/
   __init__.py
   image_utils.py        # load / save / grayscale conversion
   svd_compression.py    # truncated-SVD core (operates on a grayscale matrix)
-  metrics.py            # MSE, PSNR, compression ratio
+  metrics.py            # MSE, PSNR, compression ratio, retained energy
 experiments/
   run_demo.py           # grayscale demo: compress at several ranks
 notebooks/              # Jupyter notebooks (add here)
@@ -47,7 +47,12 @@ python experiments/run_demo.py
 This loads an image from `data/sample_images/` (or a small synthetic image when the
 folder is empty), converts it to grayscale, compresses it at several rank values,
 writes reconstructions to `results/reconstructed/`, and prints MSE / PSNR /
-compression ratio metrics.
+compression ratio / retained energy metrics.
+
+**Retained energy** is the fraction of the total singular-value energy (sum of σ²)
+preserved by keeping the top-k singular values. It quantifies how much of the image's
+information survives the rank-k truncation, complementing the MSE and PSNR quality
+metrics and the compression ratio.
 
 ## Notes
 

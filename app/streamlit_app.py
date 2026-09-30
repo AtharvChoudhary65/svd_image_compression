@@ -1,4 +1,4 @@
-"""Streamlit app for SVD image compression — basic Phase 5A UI.
+"""Streamlit app for SVD image compression — basic Phase 5A-style interface.
 
 Run with:
     streamlit run app/streamlit_app.py
@@ -11,19 +11,25 @@ import os
 import sys
 import tempfile
 
-# Make src/ importable when running from app/
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import streamlit as st
-from PIL import Image
 
-from src.image_utils import load_image, to_grayscale
+from src.image_utils import load_image, save_image, to_grayscale
 from src.svd_compression import svd_compress
 from src.metrics import analysis_table
 from src.visualization import plot_comparison, plot_metric_curves, plot_analysis
 
 RESULT_DIR = os.path.join("results", "reconstructed")
+
+st.set_page_config(page_title="SVD Image Compression", layout="wide")
+
+# Reusable explanation block shown near rank controls
+RANK_EXPLANATION = (
+    "*Rank k is the number of singular components retained in the "
+    "low-rank approximation.*"
+)
 
 
 def upload_image():
@@ -43,86 +49,149 @@ def upload_image():
 
 def mode_single(image):
     """Mode 1: Single rank reconstruction."""
-    k = st.number_input("Rank k", min_value=1, max_value=min(image.shape), value=20)
-    if st.button("Run"):
+    max_k = min(image.shape)
+    st.markdown(RANK_EXPLANATION)
+    st.markdown(f"*Maximum valid rank: {max_k}*")
+    st.markdown("The image matrix **A** is approximated as **A ≈ Uₖ Σₖ Vₖᵀ**, "
+                "using only the first k singular components.")
+    k = st.number_input("Rank k", min_value=1, max_value=max_k, value=20)
+    if st.button("Run Reconstruction", type="primary"):
         compressed, _ = svd_compress(image, k)
         results = analysis_table(image, [k])[0]
-        st.image([image, compressed], caption=["Original", f"Reconstructed (k={k})"], clamp=True)
-        col1, col2 = st.columns(2)
+
+        st.image(
+            [image, compressed],
+            caption=["ORIGINAL", f"RECONSTRUCTED · RANK {k}"],
+            clamp=True,
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("MSE", f"{results['mse']:.4f}")
         col2.metric("PSNR (dB)", f"{results['psnr']:.2f}")
-        st.metric("Compression Ratio", f"{results['compression_ratio']:.1f}x")
+        col3.metric("Compression Ratio", f"{results['compression_ratio']:.1f}x")
+        col4.metric("Retained Energy", f"{results['retained_energy']*100:.1f}%")
+
+        save_image(image, os.path.join(RESULT_DIR, "sample_original.png"))
+        save_image(compressed, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
 
 
 def mode_compare(image):
     """Mode 2: Compare multiple ranks."""
-    ranks_str = st.text_input("Ranks (comma-separated)", value="10, 25, 50, 100")
-    ranks = sorted([int(r.strip()) for r in ranks_str.split(",") if r.strip().isdigit()])
     max_rank = min(image.shape)
+    st.markdown(RANK_EXPLANATION)
+    st.markdown(f"*Maximum valid rank: {max_rank}*")
+    st.markdown("Each reconstruction uses **A ≈ Uₖ Σₖ Vₖᵀ** with k singular components.")
+    ranks_str = st.text_input("Ranks (comma-separated)", value="10, 25, 50, 100")
+    ranks = sorted(
+        [int(r.strip()) for r in ranks_str.split(",") if r.strip().isdigit()]
+    )
+    if not ranks:
+        st.warning("Enter at least one valid rank.")
+        return
     if any(k > max_rank for k in ranks):
         st.error(f"Rank(s) exceed maximum valid rank {max_rank} for this image.")
         return
-    if st.button("Run"):
+    if any(k <= 0 for k in ranks):
+        st.error("All ranks must be positive integers.")
+        return
+
+    if st.button("Run Comparison", type="primary"):
         results = analysis_table(image, ranks)
-        reconstructions = []
-        for k in ranks:
-            compressed, _ = svd_compress(image, k)
-            reconstructions.append(compressed)
+        reconstructions = [svd_compress(image, k)[0] for k in ranks]
 
         os.makedirs(RESULT_DIR, exist_ok=True)
         for k, rec in zip(ranks, reconstructions):
-            path = os.path.join(RESULT_DIR, f"reconstructed_k{k}.png")
-            from src.image_utils import save_image
-            save_image(rec, path)
+            save_image(rec, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
+        save_image(image, os.path.join(RESULT_DIR, "sample_original.png"))
 
-        st.image(reconstructions, caption=[f"rank={k}" for k in ranks], clamp=True)
+        cols = st.columns(len(ranks))
+        for i, (k, rec, r) in enumerate(zip(ranks, reconstructions, results)):
+            with cols[i]:
+                st.markdown(f"**RANK {k}**")
+                st.image(rec, clamp=True, use_container_width=True)
+                st.caption(f"MSE: {r['mse']:.4f}")
+                st.caption(f"PSNR: {r['psnr']:.2f} dB")
+                st.caption(f"Ratio: {r['compression_ratio']:.1f}×")
+                st.caption(f"Energy: {r['retained_energy']*100:.1f}%")
+
         st.markdown("### Metrics")
         st.table(results)
+
         fig_path = os.path.join(RESULT_DIR, "comparison.png")
         plot_comparison(image, reconstructions, ranks, fig_path)
-        st.image(fig_path, caption="Comparison figure")
+        st.image(fig_path, caption="Side-by-side comparison")
 
 
 def mode_analysis(image):
     """Mode 3: Compression analysis over a rank range."""
     max_rank = min(image.shape)
-    end_k = st.slider("Max rank", min_value=5, max_value=max_rank, value=min(100, max_rank))
-    start_k = st.slider("Min rank", min_value=1, max_value=end_k, value=5)
-    step = st.number_input("Step", min_value=1, max_value=end_k, value=5)
+    st.markdown(RANK_EXPLANATION)
+    st.markdown(f"*Maximum valid rank: {max_rank}*")
+    st.markdown("The image matrix **A** is approximated as **A ≈ Uₖ Σₖ Vₖᵀ**, "
+                "retaining only the first k singular components from the full SVD "
+                "**A = U Σ Vᵀ**.")
+    start_k = st.number_input("Start Rank", min_value=1, max_value=max_rank, value=5, step=1)
+    end_k = st.number_input("End Rank", min_value=1, max_value=max_rank, value=min(100, max_rank), step=1)
+    step = st.number_input("Step", min_value=1, max_value=max_rank, value=5, step=1)
+
+    if start_k > end_k:
+        st.error(f"Start rank ({start_k}) must be less than or equal to end rank ({end_k}).")
+        return
+
+    if end_k > max_rank:
+        st.error(
+            f"End rank ({end_k}) exceeds the maximum valid rank "
+            f"({max_rank}) for this image."
+        )
+        return
+
     ranks = list(range(start_k, end_k + 1, step))
-    if st.button("Run"):
+    if not ranks:
+        st.warning("No valid ranks in the selected range.")
+        return
+
+    if st.button("Run Analysis", type="primary"):
         results = analysis_table(image, ranks)
-        st.markdown("### Analysis Table")
-        st.table(results)
 
         os.makedirs(RESULT_DIR, exist_ok=True)
         ratios = [r["compression_ratio"] for r in results]
         mses = [r["mse"] for r in results]
         psnrs = [r["psnr"] for r in results]
-        plot_analysis(ranks, ratios, mses, psnrs, os.path.join(RESULT_DIR, "analysis.png"))
-        st.image(os.path.join(RESULT_DIR, "analysis.png"), caption="Compression analysis")
+        fig_path = os.path.join(RESULT_DIR, "analysis.png")
+        plot_analysis(ranks, ratios, mses, psnrs, fig_path)
+        plot_metric_curves(ranks, mses, psnrs, os.path.join(RESULT_DIR, "metric_curves.png"))
+
+        st.markdown("### Analysis Table")
+        st.dataframe(results, use_container_width=True, hide_index=True)
+
+        st.markdown("### Rank vs MSE / PSNR / Compression Ratio")
+        st.image(fig_path, caption="Compression analysis figure")
+
+        st.markdown(
+            "<small>Increasing k retains more singular components, which generally "
+            "improves reconstruction quality and retained energy, while reducing the "
+            "compression ratio.</small>",
+            unsafe_allow_html=True,
+        )
 
 
 def main():
-    st.set_page_config(page_title="SVD Image Compression", layout="wide")
     st.title("SVD Image Compression")
-    st.markdown("Upload a grayscale or RGB image and explore low-rank SVD reconstruction.")
+    st.markdown("Upload an image and explore low-rank SVD reconstruction.")
 
     image = upload_image()
     if image is None:
         st.info("Upload an image to get started.")
         return
 
-    st.success(f"Image loaded: shape {image.shape}")
-
     mode = st.selectbox(
-        "Mode",
-        ["1. Single Reconstruction", "2. Compare Ranks", "3. Compression Analysis"],
+        "Select mode",
+        ["Single Reconstruction", "Compare Ranks", "Compression Analysis"],
     )
 
-    if mode.startswith("1"):
+    if mode == "Single Reconstruction":
         mode_single(image)
-    elif mode.startswith("2"):
+    elif mode == "Compare Ranks":
         mode_compare(image)
     else:
         mode_analysis(image)

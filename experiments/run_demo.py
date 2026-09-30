@@ -99,12 +99,12 @@ def main():
         save_image(compressed, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
         reconstructions.append(compressed)
 
-    print(f"\n{'Rank':>6} | {'Ratio':>8} | {'MSE':>10} | {'PSNR(dB)':>10}")
-    print("-" * 50)
+    print(f"\n{'Rank':>6} | {'Ratio':>8} | {'MSE':>10} | {'PSNR(dB)':>10} | {'Energy':>8}")
+    print("-" * 60)
     for r in results:
         print(
             f"{r['rank']:>6} | {r['compression_ratio']:>8.1f}x | "
-            f"{r['mse']:>10.4f} | {r['psnr']:>10.2f}"
+            f"{r['mse']:>10.4f} | {r['psnr']:>10.2f} | {r['retained_energy']*100:>7.2f}%"
         )
 
     mses = [r["mse"] for r in results]
