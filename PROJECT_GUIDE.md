@@ -27,8 +27,8 @@ pip install -r requirements.txt
 | --- | --- |
 | `src/image_utils.py` | `load_image`, `save_image`, `to_grayscale` — I/O helpers (PIL + numpy). |
 | `src/svd_compression.py` | `svd_compress(image, k)` — truncated SVD on a grayscale matrix. |
-| `src/metrics.py` | `mean_squared_error`, `peak_signal_noise_ratio`, `compression_ratio`. |
-| `src/visualization.py` | `plot_comparison`, `plot_metric_curves` — Matplotlib figure helpers. |
+| `src/metrics.py` | `mean_squared_error`, `peak_signal_noise_ratio`, `compression_ratio`, `analysis_table`. |
+| `src/visualization.py` | `plot_comparison`, `plot_metric_curves`, `plot_analysis` — Matplotlib figure helpers. |
 | `experiments/run_demo.py` | End-to-end demo: grayscale pipeline, multiple ranks, metrics, outputs. |
 | `data/sample_images/` | Place input images here. |
 | `results/reconstructed/` | Demo output reconstructions. |
@@ -45,10 +45,11 @@ python experiments/run_demo.py --image path/to/image.jpg --ranks 10 25 50
 
 This loads the image, converts it to grayscale, computes the SVD, and reconstructs it at
 each requested rank. Reconstructed PNGs are written to `results/reconstructed/` alongside
-a metrics table (rank, MSE, PSNR, compression ratio) and two Matplotlib figures:
+a metrics table (rank, MSE, PSNR, compression ratio) and three Matplotlib figures:
 
 - `comparison.png` — side-by-side original and reconstructions with rank labels.
 - `metric_curves.png` — rank vs MSE and rank vs PSNR.
+- `analysis.png` — three panels: rank vs compression ratio, rank vs PSNR, rank vs MSE.
 
 ### Defaults / fallback
 

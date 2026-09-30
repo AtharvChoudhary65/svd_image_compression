@@ -16,9 +16,9 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.image_utils import load_image, save_image, to_grayscale
-from src.metrics import compression_ratio, mean_squared_error, peak_signal_noise_ratio
+from src.metrics import analysis_table, compression_ratio, mean_squared_error, peak_signal_noise_ratio
 from src.svd_compression import svd_compress
-from src.visualization import plot_comparison, plot_metric_curves
+from src.visualization import plot_analysis, plot_comparison, plot_metric_curves
 
 DEFAULT_RANKS = [5, 20, 50, 100]
 SAMPLE_DIR = os.path.join("data", "sample_images")
@@ -86,28 +86,30 @@ def main():
     height, width = image.shape[:2]
     max_rank = min(height, width)
     ranks = validate_ranks(args.ranks, max_rank)
-    channels = 1
 
     save_image(image, os.path.join(RESULT_DIR, "sample_original.png"))
 
     print(f"Source:      {source_name}")
     print(f"Image shape: {image.shape}")
-    print(f"{'Rank':>6} | {'MSE':>10} | {'PSNR(dB)':>10} | {'Ratio':>8}")
-    print("-" * 50)
 
+    results = analysis_table(image, ranks)
     reconstructions = []
-    mses = []
-    psnrs = []
     for k in ranks:
         compressed, _ = svd_compress(image, k)
-        mse = mean_squared_error(image, compressed)
-        psnr = peak_signal_noise_ratio(image, compressed)
-        ratio = compression_ratio(height, width, channels, k)
         save_image(compressed, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
-        print(f"{k:>6} | {mse:>10.4f} | {psnr:>10.2f} | {ratio:>8.1f}x")
         reconstructions.append(compressed)
-        mses.append(mse)
-        psnrs.append(psnr)
+
+    print(f"\n{'Rank':>6} | {'Ratio':>8} | {'MSE':>10} | {'PSNR(dB)':>10}")
+    print("-" * 50)
+    for r in results:
+        print(
+            f"{r['rank']:>6} | {r['compression_ratio']:>8.1f}x | "
+            f"{r['mse']:>10.4f} | {r['psnr']:>10.2f}"
+        )
+
+    mses = [r["mse"] for r in results]
+    psnrs = [r["psnr"] for r in results]
+    ratios = [r["compression_ratio"] for r in results]
 
     plot_comparison(
         image,
@@ -121,10 +123,18 @@ def main():
         psnrs,
         os.path.join(RESULT_DIR, "metric_curves.png"),
     )
+    plot_analysis(
+        ranks,
+        ratios,
+        mses,
+        psnrs,
+        os.path.join(RESULT_DIR, "analysis.png"),
+    )
 
     print(f"\nReconstructions written to {RESULT_DIR}/")
     print(f"Comparison figure: {os.path.join(RESULT_DIR, 'comparison.png')}")
     print(f"Metric curves:     {os.path.join(RESULT_DIR, 'metric_curves.png')}")
+    print(f"Analysis figure:   {os.path.join(RESULT_DIR, 'analysis.png')}")
 
 
 if __name__ == "__main__":

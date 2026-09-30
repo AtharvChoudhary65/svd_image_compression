@@ -51,11 +51,40 @@ def plot_metric_curves(ranks, mses, psnrs, path):
     ax1.set_title("Rank vs MSE")
     ax1.grid(True, alpha=0.3)
 
+    fig.tight_layout()
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+
+
+def plot_analysis(ranks, ratios, mses, psnrs, path):
+    """Save a three-panel analysis figure: rank vs ratio, rank vs PSNR, rank vs MSE.
+
+    Args:
+        ranks: list of rank values.
+        ratios: list of compression-ratio values (one per rank).
+        mses: list of MSE values (one per rank).
+        psnrs: list of PSNR values (one per rank).
+        path: output file path for the figure.
+    """
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 3.5))
+
+    ax1.plot(ranks, ratios, "o-", color="tab:green")
+    ax1.set_xlabel("Rank")
+    ax1.set_ylabel("Compression Ratio")
+    ax1.set_title("Rank vs Compression Ratio")
+    ax1.grid(True, alpha=0.3)
+
     ax2.plot(ranks, psnrs, "o-", color="tab:orange")
     ax2.set_xlabel("Rank")
     ax2.set_ylabel("PSNR (dB)")
     ax2.set_title("Rank vs PSNR")
     ax2.grid(True, alpha=0.3)
+
+    ax3.plot(ranks, mses, "o-", color="tab:blue")
+    ax3.set_xlabel("Rank")
+    ax3.set_ylabel("MSE")
+    ax3.set_title("Rank vs MSE")
+    ax3.grid(True, alpha=0.3)
 
     fig.tight_layout()
     fig.savefig(path, dpi=100)
