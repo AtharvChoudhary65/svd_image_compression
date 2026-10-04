@@ -1,4 +1,4 @@
-"""Barebones SVD-based image compression on a grayscale matrix."""
+"""SVD-based compression for grayscale and RGB images."""
 
 import numpy as np
 
@@ -12,19 +12,32 @@ def _svd_rank_k(matrix, k):
 
 
 def svd_compress(image, k):
-    """Compress a grayscale image with truncated SVD keeping the top k singular values.
+    """Compress an image with truncated SVD keeping the top k singular values.
 
-    The pipeline expects a single 2-D grayscale matrix, i.e. an array produced by
-    ``image_utils.to_grayscale``. SVD is computed once on that matrix and a rank-k
-    approximation is returned.
+    Grayscale images are decomposed as one matrix. RGB images are decomposed
+    independently per channel, using the same rank for each channel.
 
     Args:
-        image: 2-D float array (H, W) with values in [0, 1].
+        image: 2-D grayscale or 3-D RGB float array with values in [0, 1].
         k: number of singular values to retain.
 
     Returns:
-        compressed: rank-k reconstruction of ``image``, clipped to [0, 1].
-        singular_values: singular values of ``image`` (for analysis).
+        compressed: rank-k reconstruction matching ``image``, clipped to [0, 1].
+        singular_values: singular values for each channel (a 1-D array for
+            grayscale images or a (channels, components) array for RGB images).
     """
-    compressed, singular_values = _svd_rank_k(image, k)
+    image = np.asarray(image, dtype=np.float64)
+    if image.ndim == 2:
+        compressed, singular_values = _svd_rank_k(image, k)
+    elif image.ndim == 3 and image.shape[2] == 3:
+        channels = [
+            _svd_rank_k(image[:, :, channel], k)
+            for channel in range(image.shape[2])
+        ]
+        compressed = np.stack([result[0] for result in channels], axis=2)
+        singular_values = np.stack([result[1] for result in channels], axis=0)
+    else:
+        raise ValueError(
+            "image must be a 2-D grayscale array or a 3-D RGB array."
+        )
     return np.clip(compressed, 0.0, 1.0), singular_values
