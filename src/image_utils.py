@@ -7,13 +7,15 @@ from PIL import Image
 def load_image(path):
     """Load an image file into a float64 array scaled to [0, 1].
 
-    RGB images are returned as (H, W, 3); every other mode is converted to
-    grayscale and returned as (H, W).
+    Grayscale images are returned as (H, W); color images are converted to RGB
+    and returned as (H, W, 3).
     """
     image = Image.open(path)
-    if image.mode == "RGB":
-        return np.asarray(image, dtype=np.float64) / 255.0
-    return np.asarray(image.convert("L"), dtype=np.float64) / 255.0
+    if image.mode in ("1", "L", "I", "F", "I;16"):
+        image = image.convert("L")
+    else:
+        image = image.convert("RGB")
+    return np.asarray(image, dtype=np.float64) / 255.0
 
 
 def save_image(array, path):
