@@ -40,20 +40,20 @@ def retained_energy(singular_values, k):
         Float in [0, 1] representing the fraction of total energy retained.
     """
     singular_values = np.asarray(singular_values, dtype=np.float64)
-    total = singular_values.shape[0]
+    total = singular_values.shape[-1]
     if k <= 0:
         raise ValueError(f"k must be a positive integer, got {k}.")
     if k > total:
         raise ValueError(f"k ({k}) exceeds the number of singular values ({total}).")
     squared = singular_values ** 2
-    return float(np.sum(squared[:k]) / np.sum(squared))
+    return float(np.sum(squared[..., :k]) / np.sum(squared))
 
 
 def analysis_table(image, ranks, singular_values=None):
     """Compute compression-analysis metrics for each rank.
 
     Args:
-        image: 2-D grayscale float array in [0, 1].
+        image: 2-D grayscale or 3-D RGB float array in [0, 1].
         ranks: iterable of positive rank values (already validated).
         singular_values: Optional pre-computed singular values from SVD.
             When provided, these are reused for the retained-energy calculation
@@ -66,7 +66,7 @@ def analysis_table(image, ranks, singular_values=None):
     from src.svd_compression import svd_compress
 
     height, width = image.shape[:2]
-    channels = 1
+    channels = image.shape[2] if image.ndim == 3 else 1
 
     # Compute singular values once if not provided
     if singular_values is None:
