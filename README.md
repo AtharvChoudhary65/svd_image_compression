@@ -1,10 +1,10 @@
 # Image Compression and Reconstruction via Low-Rank SVD Approximation
 
-A Python project that demonstrates how **Singular Value Decomposition (SVD)** can compress a grayscale image by retaining only its most important components. The application reconstructs the image at various ranks, allowing you to explore the trade-off between compression and reconstruction quality.
+A Python project that demonstrates how **Singular Value Decomposition (SVD)** can compress grayscale and color images by retaining only their most important components. Color images are decomposed independently by RGB channel, and reconstructed in color at various ranks to explore the trade-off between compression and reconstruction quality.
 
 ## Features
 
-- **Grayscale SVD compression** using NumPy's `numpy.linalg.svd`
+- **Grayscale and RGB SVD compression** using NumPy's `numpy.linalg.svd`
 - **Streamlit web interface** with three interactive modes
 - **CLI demo** for batch experimentation
 - **Quality metrics**: MSE, PSNR, compression ratio, retained energy
@@ -15,9 +15,9 @@ A Python project that demonstrates how **Singular Value Decomposition (SVD)** ca
 ```
 Input Image
     ↓
-Grayscale Conversion
+Grayscale Matrix or RGB Channels
     ↓
-Image → Matrix
+Image → Matrix (per channel for RGB)
     ↓
 Singular Value Decomposition (A = UΣVᵀ)
     ↓
@@ -32,7 +32,7 @@ Quality + Compression Metrics
 
 ### Mathematical background
 
-A grayscale image is represented as a 2-D matrix **A**. SVD decomposes it into:
+A grayscale image is represented as a 2-D matrix **A**. For a color image, the same decomposition is applied independently to its red, green, and blue channel matrices:
 
 ```
 A = U Σ Vᵀ
@@ -47,6 +47,8 @@ Aₖ ≈ Uₖ Σₖ Vₖᵀ
 ```
 
 The parameter `k` controls the trade-off: smaller `k` gives stronger compression but more information loss; larger `k` preserves more detail but provides less compression.
+
+Each RGB channel uses the same rank `k`, and the three reconstructed channels are combined to produce the color image.
 
 ## Why SVD Works for Image Compression
 
@@ -152,7 +154,7 @@ svd_image_compression/
 ├── results/
 │   └── reconstructed/        # Output images and charts
 ├── src/
-│   ├── image_utils.py        # Image loading, saving, grayscale conversion
+│   ├── image_utils.py        # Image loading and saving
 │   ├── svd_compression.py    # Truncated SVD core
 │   ├── metrics.py            # MSE, PSNR, compression ratio, retained energy
 │   └── visualization.py      # Matplotlib plotting helpers
@@ -181,9 +183,8 @@ The appropriate rank depends on the desired trade-off between image quality and 
 
 ## Limitations
 
-- The current implementation operates on grayscale images (color images are reduced to luminance).
+- RGB images are compressed independently by color channel; grayscale inputs remain grayscale.
 - Pure NumPy SVD is computed on the full matrix; this can be slow for very large images.
 - The compression ratio is a representation-based metric (storage of `Uₖ`, `Σₖ`, `Vₖᵀ`), not a comparison against JPEG/PNG file sizes.
 - No automatic optimal-rank selection is provided.
 - This is an educational project, not a production image codec.
-
