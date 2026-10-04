@@ -1,4 +1,4 @@
-"""Demo: compress a grayscale image at one or more SVD ranks from the CLI.
+"""Demo: compress a grayscale or RGB image at one or more SVD ranks from the CLI.
 
 Usage:
     python experiments/run_demo.py --image path/to/image.jpg --ranks 10 25 50
@@ -15,7 +15,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.image_utils import load_image, save_image, to_grayscale
+from src.image_utils import load_image, save_image
 from src.metrics import analysis_table, compression_ratio, mean_squared_error, peak_signal_noise_ratio
 from src.svd_compression import svd_compress
 from src.visualization import plot_analysis, plot_comparison, plot_metric_curves
@@ -82,7 +82,6 @@ def main():
     else:
         image, source_name = get_sample_image()
 
-    image = to_grayscale(image)
     height, width = image.shape[:2]
     max_rank = min(height, width)
     ranks = validate_ranks(args.ranks, max_rank)
