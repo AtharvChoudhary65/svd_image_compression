@@ -11,8 +11,8 @@ def plot_comparison(original, reconstructions, ranks, path):
     """Save a side-by-side figure comparing the original to rank-k reconstructions.
 
     Args:
-        original: 2-D float array in [0, 1] (grayscale image).
-        reconstructions: list of 2-D float arrays matching ``original``.
+        original: grayscale or RGB float array in [0, 1].
+        reconstructions: list of arrays matching ``original``.
         ranks: list of rank labels (one per reconstruction).
         path: output file path for the figure.
     """
@@ -21,12 +21,22 @@ def plot_comparison(original, reconstructions, ranks, path):
     if n == 1:
         axes = [axes]
 
-    axes[0].imshow(original, cmap="gray", vmin=0, vmax=1)
+    axes[0].imshow(
+        original,
+        cmap="gray" if original.ndim == 2 else None,
+        vmin=0,
+        vmax=1,
+    )
     axes[0].set_title("Original")
     axes[0].axis("off")
 
     for i, (img, k) in enumerate(zip(reconstructions, ranks)):
-        axes[i + 1].imshow(img, cmap="gray", vmin=0, vmax=1)
+        axes[i + 1].imshow(
+            img,
+            cmap="gray" if img.ndim == 2 else None,
+            vmin=0,
+            vmax=1,
+        )
         axes[i + 1].set_title(f"rank = {k}")
         axes[i + 1].axis("off")
 
@@ -96,17 +106,35 @@ def plot_singular_values(singular_values, path):
     """Save a plot of the singular-value spectrum.
 
     Args:
-        singular_values: 1-D array of singular values (descending order).
+        singular_values: 1-D array (grayscale) or 2-D array (one row per
+            color channel) of descending singular values.
         path: output file path for the figure.
     """
     fig, ax = plt.subplots(figsize=(8, 3))
-    ax.plot(
-        range(1, len(singular_values) + 1),
-        singular_values,
-        "o-",
-        markersize=2,
-        color="tab:blue",
-    )
+    singular_values = np.asarray(singular_values)
+    if singular_values.ndim == 1:
+        ax.plot(
+            range(1, len(singular_values) + 1),
+            singular_values,
+            "o-",
+            markersize=2,
+            color="tab:blue",
+        )
+    else:
+        for values, color, label in zip(
+            singular_values,
+            ("tab:red", "tab:green", "tab:blue"),
+            ("Red", "Green", "Blue"),
+        ):
+            ax.plot(
+                range(1, len(values) + 1),
+                values,
+                "o-",
+                markersize=2,
+                color=color,
+                label=label,
+            )
+        ax.legend()
     ax.set_xlabel("Singular Component")
     ax.set_ylabel("Singular Value")
     ax.set_title("Singular Value Spectrum")
@@ -165,11 +193,13 @@ def plot_error(original, reconstructed, path):
     heatmap where brighter regions indicate larger reconstruction error.
 
     Args:
-        original: 2-D float array in [0, 1] (grayscale image).
-        reconstructed: 2-D float array matching ``original``.
+        original: grayscale or RGB float array in [0, 1].
+        reconstructed: array matching ``original``.
         path: output file path for the figure.
     """
     error = np.abs(original - reconstructed)
+    if error.ndim == 3:
+        error = np.mean(error, axis=2)
     max_err = error.max()
     if max_err > 0:
         normalized = error / max_err
@@ -191,8 +221,8 @@ def plot_reconstruction_comparison(original, reconstructions, ranks, path):
     """Save a side-by-side figure comparing the original to rank-k reconstructions.
 
     Args:
-        original: 2-D float array in [0, 1] (grayscale image).
-        reconstructions: list of 2-D float arrays matching ``original``.
+        original: grayscale or RGB float array in [0, 1].
+        reconstructions: list of arrays matching ``original``.
         ranks: list of rank labels (one per reconstruction).
         path: output file path for the figure.
     """
@@ -201,12 +231,22 @@ def plot_reconstruction_comparison(original, reconstructions, ranks, path):
     if n == 1:
         axes = [axes]
 
-    axes[0].imshow(original, cmap="gray", vmin=0, vmax=1)
+    axes[0].imshow(
+        original,
+        cmap="gray" if original.ndim == 2 else None,
+        vmin=0,
+        vmax=1,
+    )
     axes[0].set_title("Original")
     axes[0].axis("off")
 
     for i, (img, k) in enumerate(zip(reconstructions, ranks)):
-        axes[i + 1].imshow(img, cmap="gray", vmin=0, vmax=1)
+        axes[i + 1].imshow(
+            img,
+            cmap="gray" if img.ndim == 2 else None,
+            vmin=0,
+            vmax=1,
+        )
         axes[i + 1].set_title(f"rank = {k}")
         axes[i + 1].axis("off")
 
