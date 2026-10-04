@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import streamlit as st
 
-from src.image_utils import load_image, save_image, to_grayscale
-from src.svd_compression import svd_compress, _svd_rank_k
+from src.image_utils import load_image, save_image
+from src.svd_compression import svd_compress
 from src.metrics import analysis_table
 from src.visualization import plot_comparison, plot_metric_curves, plot_analysis, plot_singular_values, plot_rank_vs_quality, plot_error
 
@@ -33,7 +33,7 @@ RANK_EXPLANATION = (
 
 
 def upload_image():
-    """Return a grayscale float64 array from a Streamlit upload, or None."""
+    """Return a grayscale or RGB float64 array from a Streamlit upload."""
     uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
     if uploaded is None:
         return None
@@ -44,12 +44,12 @@ def upload_image():
         image = load_image(tmp_path)
     finally:
         os.unlink(tmp_path)
-    return to_grayscale(image)
+    return image
 
 
 def mode_single(image):
     """Mode 1: Single rank reconstruction."""
-    max_k = min(image.shape)
+    max_k = min(image.shape[:2])
     st.markdown(RANK_EXPLANATION)
     st.markdown(f"*Maximum valid rank: {max_k}*")
     st.markdown("The image matrix **A** is approximated as **A ≈ Uₖ Σₖ Vₖᵀ**, "
@@ -82,7 +82,7 @@ def mode_single(image):
 
 def mode_compare(image):
     """Mode 2: Compare multiple ranks."""
-    max_rank = min(image.shape)
+    max_rank = min(image.shape[:2])
     st.markdown(RANK_EXPLANATION)
     st.markdown(f"*Maximum valid rank: {max_rank}*")
     st.markdown("Each reconstruction uses **A ≈ Uₖ Σₖ Vₖᵀ** with k singular components.")
@@ -129,7 +129,7 @@ def mode_compare(image):
 
 def mode_analysis(image):
     """Mode 3: Compression analysis over a rank range."""
-    max_rank = min(image.shape)
+    max_rank = min(image.shape[:2])
     st.markdown(RANK_EXPLANATION)
     st.markdown(f"*Maximum valid rank: {max_rank}*")
     st.markdown("The image matrix **A** is approximated as **A ≈ Uₖ Σₖ Vₖᵀ**, "
