@@ -4,13 +4,13 @@ This guide explains the implementation, how to run it, and how to extend it.
 
 ## 1. Background
 
-Any matrix `A` (here, a grayscale image) can be decomposed via SVD as `A = U Σ Vᵀ`. A rank-`k` approximation keeps the `k` largest singular values and discards the rest:
+Any matrix `A` (here, a grayscale image or one RGB color channel) can be decomposed via SVD as `A = U Σ Vᵀ`. For color images, this decomposition is performed independently on each RGB channel. A rank-`k` approximation keeps the `k` largest singular values per channel and discards the rest:
 
 ```
 A_k = U[:, :k] * s[:k] @ Vt[:k, :]
 ```
 
-The image is first converted to grayscale (L = 0.299R + 0.587G + 0.114B), so SVD is computed once on a single 2-D matrix. Smaller `k` gives stronger compression with more loss; larger `k` gives higher fidelity.
+Grayscale images use one 2-D matrix; RGB images use three 2-D matrices and recombine their reconstructions as a color image. Smaller `k` gives stronger compression with more loss; larger `k` gives higher fidelity.
 
 ## 2. Setup
 
@@ -24,11 +24,11 @@ pip install -r requirements.txt
 
 | Path | Purpose |
 | --- | --- |
-| `src/image_utils.py` | `load_image`, `save_image`, `to_grayscale` — I/O helpers (PIL + numpy). |
-| `src/svd_compression.py` | `svd_compress(image, k)` — truncated SVD on a grayscale matrix. |
+| `src/image_utils.py` | `load_image`, `save_image` — image I/O helpers (PIL + numpy). |
+| `src/svd_compression.py` | `svd_compress(image, k)` — truncated SVD for grayscale images or RGB channels. |
 | `src/metrics.py` | `mean_squared_error`, `peak_signal_noise_ratio`, `compression_ratio`, `retained_energy`, `analysis_table`. |
 | `src/visualization.py` | Plotting helpers: comparison figures, metric curves, singular value spectrum, error visualization. |
-| `experiments/run_demo.py` | CLI demo: grayscale pipeline, multiple ranks, metrics, outputs. |
+| `experiments/run_demo.py` | CLI demo: grayscale and RGB pipeline, multiple ranks, metrics, outputs. |
 | `app/streamlit_app.py` | Streamlit web interface with three modes. |
 | `data/sample_images/` | Place input images here. |
 | `results/reconstructed/` | Output images and charts. |
@@ -89,6 +89,6 @@ Validations:
 ## 8. Notes / limitations
 
 - NumPy SVD is computed on the full matrix; slow for very large images.
-- Operates on a single grayscale matrix (color is reduced to luminance).
+- RGB images are compressed independently by channel; grayscale inputs remain grayscale.
 - Compression ratio is a representation-based metric, not a comparison against JPEG/PNG file sizes.
 - No automatic optimal-rank selection is provided.
