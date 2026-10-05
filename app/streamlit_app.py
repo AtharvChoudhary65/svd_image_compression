@@ -18,7 +18,7 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 
-from src.image_utils import load_image, save_image
+from src.image_utils import load_image, save_image, to_grayscale
 from src.metrics import (
     analysis_table,
     compression_ratio,
@@ -43,6 +43,8 @@ RESULT_DIR = os.path.join("results", "reconstructed")
 # Longest side used for the interactive session. Each new rank costs one SVD per
 # channel, so very large uploads are downscaled to keep the slider responsive.
 MAX_SIDE = 1280
+
+COLOR_MODES = ["Colour", "Grayscale"]
 
 st.set_page_config(page_title="SVD Image Compressor", page_icon="◰", layout="wide")
 
@@ -145,7 +147,6 @@ def render_header():
         """<div class="hero">
 <div class="eyebrow"><span class="eyebrow-dot"></span>Singular value decomposition</div>
 <h1>SVD <em>IMAGE</em> COMPRESSOR</h1>
-<p>Compress images. <span>Explore the mathematics.</span></p>
 </div>""",
         unsafe_allow_html=True,
     )
@@ -180,7 +181,22 @@ def render_footer():
     )
 
 
-def render_rank_panel(max_rank, file_key):
+def render_color_mode():
+    """Colour / Grayscale switch for the working image. Returns the chosen mode."""
+    if hasattr(st, "segmented_control"):
+        mode = st.segmented_control(
+            "Image mode", COLOR_MODES, default="Colour",
+            key="color_mode", label_visibility="collapsed",
+        )
+    else:  # older Streamlit
+        mode = st.radio(
+            "Image mode", COLOR_MODES, horizontal=True,
+            key="color_mode", label_visibility="collapsed",
+        )
+    return mode or "Colour"
+
+
+def render_rank_panel(max_rank, slider_key):
     """Primary interaction. Returns the selected rank."""
     with box("rank"):
         left, right = st.columns([1, 2.6], vertical_alignment="center")
@@ -191,7 +207,7 @@ def render_rank_panel(max_rank, file_key):
             max_value=max_rank,
             value=min(20, max_rank),
             step=1,
-            key=f"rank_{file_key}",
+            key=f"rank_{slider_key}",
             label_visibility="collapsed",
             help="Number of singular values and vectors retained (k).",
         )
@@ -277,8 +293,8 @@ def render_metrics(original_bytes, compressed_bytes, m):
     cards = [
         stat_card("Original size", fmt_bytes(original_bytes)),
         stat_card("Compressed size", fmt_bytes(compressed_bytes)),
-        stat_card("Compression ratio", f"{m['ratio']:.1f}", "×", highlight=True),
-        stat_card("PSNR", f"{m['psnr']:.2f}", "dB", highlight=True),
+        stat_card("Compression ratio", f"{m['ratio']:.1f}", "×"),
+        stat_card("PSNR", f"{m['psnr']:.2f}", "dB"),
         stat_card("MSE", f"{m['mse']:.4f}"),
         stat_card("Retained energy", f"{m['energy'] * 100:.1f}", "%"),
     ]
@@ -451,7 +467,7 @@ def main():
         render_footer()
         return
 
-    file_key = f"{uploaded.name}-{uploaded.size}"
+    upload_key = f"{uploaded.name}-{uploaded.size}"
     try:
         with st.spinner("Reading image…"):
             image, note = read_upload(uploaded)
@@ -459,25 +475,36 @@ def main():
         st.error("That file couldn't be read as an image. Please upload a valid JPG or PNG.")
         return
 
+    section(1, "Experiment", "Change the rank to find your balance between size and detail.")
+    mode = render_color_mode()
+    if mode == "Grayscale":
+        image = to_grayscale(image)
+    # The cache key must change with the mode so colour and grayscale never share results.
+    file_key = f"{upload_key}-{mode}"
     max_rank = min(image.shape[:2])
 
-    section(1, "Experiment", "Change the rank to find your balance between size and detail.")
-    k = render_rank_panel(max_rank, file_key)
+    # The slider is keyed on the upload only, so it keeps its value when the mode changes.
+    k = render_rank_panel(max_rank, upload_key)
     st.write("")
 
+    size_ext = ".jpg" if uploaded.name.lower().endswith((".jpg", ".jpeg")) else ".png"
     with st.spinner(f"Computing rank-{k} reconstruction…"):
         compressed, _ = cached_compress(image, file_key, k)
         singular_values = cached_spectrum(image, file_key)
         metrics = measure(image, compressed, singular_values, k)
-        size_ext = ".jpg" if uploaded.name.lower().endswith((".jpg", ".jpeg")) else ".png"
         compressed_bytes = len(encode_image(compressed, file_key, k, size_ext))
+        # In grayscale mode the "original" is the grayscale version, so size it the same way.
+        original_bytes = (
+            uploaded.size if mode == "Colour"
+            else len(encode_image(image, file_key, 0, size_ext))
+        )
 
     # Keep the saved outputs the previous app wrote on each run.
     os.makedirs(RESULT_DIR, exist_ok=True)
     save_image(image, os.path.join(RESULT_DIR, "sample_original.png"))
     save_image(compressed, os.path.join(RESULT_DIR, f"reconstructed_k{k}.png"))
 
-    render_comparison(image, compressed, k, uploaded.size, compressed_bytes)
+    render_comparison(image, compressed, k, original_bytes, compressed_bytes)
     if note:
         st.caption(note)
 
@@ -487,7 +514,7 @@ def main():
         show_image(error_path, caption="Absolute pixel difference |original − reconstructed|")
 
     render_svd_visual(singular_values, k, max_rank, metrics)
-    render_metrics(uploaded.size, compressed_bytes, metrics)
+    render_metrics(original_bytes, compressed_bytes, metrics)
     render_explainer()
     render_download(compressed, k, file_key, uploaded.name, compressed_bytes, size_ext)
     render_experiments(image, max_rank, file_key)
