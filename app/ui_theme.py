@@ -1,24 +1,24 @@
 """Visual system for the SVD Image Compressor Streamlit app.
 
-Ported from the Emergent design: a lava-lamp background (#040273 / #341539),
-liquid-glass panels, Space Grotesk + DM Mono type, and a System / Light / Dark
-switch. All colors, type and spacing live here as CSS tokens. No image-processing
-or SVD code belongs in this module.
+A deep-teal page, liquid-glass panels, Space Grotesk + DM Mono type, and a
+System / Light / Dark switch. All colors, type and spacing live here as CSS
+tokens. No image-processing or SVD code belongs in this module.
 """
 
 import matplotlib
 import streamlit as st
 
 # ---- Design tokens ---------------------------------------------------------
+# Change TEAL here (and the matching --teal token in CSS) to retune the page.
+TEAL = "#0d4a4a"
+
 COLORS = {
-    "bg": "#050514",
-    "surface": "#0B0C23",
+    "bg": TEAL,
+    "surface": "#072B2D",
     "text": "#f4f6ff",
     "muted": "#9da4be",
     "faint": "#5b6280",
     "accent": "#6C7DFF",
-    "blue": "#040273",
-    "purple": "#341539",
 }
 
 CSS = """
@@ -26,14 +26,13 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  --blue: #040273;
-  --purple: #341539;
+  --teal: #0d4a4a;
   --accent: #6C7DFF;
   --ink: #f4f6ff;
   --muted: rgba(244,246,255,.68);
   --line: rgba(255,255,255,.18);
   --glass: rgba(255,255,255,.075);
-  --panel: rgba(11,12,35,.72);
+  --panel: rgba(3,32,34,.72);
   --panel-strong: rgba(255,255,255,.08);
   --accent-box: rgba(108,125,255,.16);
   --o-text: #f4f6ff;
@@ -47,42 +46,16 @@ CSS = """
 
 /* ---- Page shell ---- */
 html, body, [class*="css"] { font-family: var(--sans); }
-.stApp { background: #050514; color: var(--o-text); font-family: var(--sans); }
+.stApp {
+  background: var(--teal);
+  color: var(--o-text);
+  font-family: var(--sans);
+}
 [data-testid="stAppViewContainer"], [data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stMain"] { position: relative; z-index: 1; background: transparent; }
 #MainMenu, footer, [data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none !important; }
 .block-container { max-width: 1100px; padding: 1rem 24px 4rem; }
 h1, h2, h3, h4 { font-family: var(--sans); }
-
-/* ---- Lava lamp ---- */
-[data-testid="stElementContainer"]:has(.lava-lamp) { position: absolute; width: 0; height: 0; margin: 0; }
-.lava-lamp {
-  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-  background: var(--blue); filter: saturate(90%);
-}
-.lava-blob {
-  position: absolute; display: block; width: 42vw; height: 42vw; border-radius: 50%;
-  filter: blur(70px); opacity: .85; will-change: transform;
-}
-.blob-one   { background: var(--purple); top: -10%; left: -10%; animation: drift-one 32s ease-in-out infinite alternate; }
-.blob-two   { background: var(--blue); right: -10%; top: 8%; animation: drift-two 38s ease-in-out infinite alternate; }
-.blob-three { background: var(--purple); left: 15%; bottom: -22%; animation: drift-three 27s ease-in-out infinite alternate; }
-.blob-four  { background: var(--blue); right: 18%; bottom: -15%; animation: drift-four 41s ease-in-out infinite alternate; }
-.blob-five  { background: var(--purple); left: 42%; top: 28%; width: 30vw; height: 30vw; animation: drift-five 35s ease-in-out infinite alternate; }
-.blob-six   { background: var(--blue); left: -15%; top: 45%; width: 38vw; height: 38vw; animation: drift-six 30s ease-in-out infinite alternate; }
-.grain {
-  position: absolute; inset: -50%; opacity: .045; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
-}
-@keyframes drift-one   { to { transform: translate(22vw,16vh) scale(1.15); } }
-@keyframes drift-two   { to { transform: translate(-22vw,20vh) scale(.8); } }
-@keyframes drift-three { to { transform: translate(19vw,-20vh) scale(1.2); } }
-@keyframes drift-four  { to { transform: translate(-28vw,-14vh) scale(1.15); } }
-@keyframes drift-five  { to { transform: translate(-12vw,18vh) scale(1.3); } }
-@keyframes drift-six   { to { transform: translate(21vw,-18vh) scale(.75); } }
-@media (prefers-reduced-motion: reduce) {
-  .lava-blob { animation: none !important; }
-}
 
 /* ---- Top bar ---- */
 .topbar-label { font: 11px var(--mono); letter-spacing: .03em; color: var(--o-faint); }
@@ -120,8 +93,6 @@ a.gh-link svg { width: 15px; height: 15px; fill: currentColor; }
   margin: 22px 0 24px; padding: 0; font-weight: 700; color: var(--o-text);
 }
 .hero h1 em { font-style: normal; color: var(--accent); }
-.hero p { color: var(--o-muted); font-size: 16px; margin: 0; }
-.hero p span { color: var(--accent); }
 
 /* ---- Section headings ---- */
 .section-heading { display: flex; gap: 19px; margin: 110px 0 28px; align-items: flex-start; }
@@ -176,7 +147,7 @@ a.gh-link svg { width: 15px; height: 15px; fill: currentColor; }
 .img-head .size { color: #f4f6ff; }
 [data-testid="stImage"] img { border-radius: 8px; }
 
-/* ---- Metrics ---- */
+/* ---- Metrics (all tiles share one style) ---- */
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .stat {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
@@ -186,8 +157,6 @@ a.gh-link svg { width: 15px; height: 15px; fill: currentColor; }
 .stat .k { font: 10px var(--mono); letter-spacing: .1em; color: #9da4be; text-transform: uppercase; }
 .stat .v { font-size: 31px; font-weight: 500; letter-spacing: -.06em; margin: 16px 0 5px; color: #f4f6ff; }
 .stat .v small { font: 11px var(--mono); letter-spacing: 0; color: #9da4be; margin-left: 6px; }
-.stat.hi { border-color: rgba(108,125,255,.55); background: rgba(21,26,70,.7); }
-.stat.hi .v { color: var(--accent); }
 .footnote { color: var(--o-faint); font: 10px var(--mono); line-height: 1.6; margin-top: 14px; }
 
 /* ---- Rank -> information -> quality chain ---- */
@@ -270,26 +239,17 @@ a.gh-link svg { width: 15px; height: 15px; fill: currentColor; }
 </style>
 """
 
-LAVA_HTML = (
-    '<div class="lava-lamp">'
-    '<span class="lava-blob blob-one"></span><span class="lava-blob blob-two"></span>'
-    '<span class="lava-blob blob-three"></span><span class="lava-blob blob-four"></span>'
-    '<span class="lava-blob blob-five"></span><span class="lava-blob blob-six"></span>'
-    '<span class="grain"></span></div>'
-)
-
-# Light mode: white page, dark glass boxes. Only text/borders outside boxes flip.
+# Light mode: white page, dark teal glass boxes. Only text/borders outside boxes flip.
 LIGHT_RULES = """
 :root {
   --o-text: #101226; --o-muted: #656a7c; --o-faint: #8a8d9b; --o-border: rgba(20,24,55,.1);
-  --panel: #0B0C23; --panel-strong: #1A1D26;
+  --panel: #072B2D; --panel-strong: #0E3A3C;
 }
 .stApp { background: #FFFFFF !important; }
-.lava-lamp { display: none !important; }
 .stApp [data-testid="stSpinner"], .stApp [data-testid="stSpinner"] * { color: var(--o-text); }
 .stApp [data-testid="stCaptionContainer"] { color: var(--o-muted); }
 .stApp :is([data-testid="stVerticalBlockBorderWrapper"], [class*="st-key-box_"]) [data-testid="stCaptionContainer"] { color: #9da4be; }
-.stApp [data-testid="stFileUploaderDropzone"] { background: #0B0C23; }
+.stApp [data-testid="stFileUploaderDropzone"] { background: #072B2D; }
 .stApp .stDownloadButton button, .stApp .stButton button { color: #f4f6ff; }
 .stApp button[kind="primary"], .stApp button[kind="primary"] * { color: #fff !important; }
 .stApp [data-testid="stButtonGroup"] button { color: #777b8b !important; }
@@ -297,6 +257,15 @@ LIGHT_RULES = """
 .stApp [data-testid="stButtonGroup"] button[aria-checked="true"],
 .stApp [data-testid="stButtonGroup"] button[aria-pressed="true"] { background: #e9eaf1 !important; color: #12152c !important; }
 .stApp a.gh-link:hover { background: #e9eaf1; }
+
+/* Reconstruction error map: the expander is a dark box, so all of its text
+   (header, caption, any markdown) must be white in light mode. */
+.stApp [data-testid="stExpander"] :is(summary, summary *, p, span, label, li,
+  [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] *,
+  [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] *) {
+  color: #ffffff !important;
+}
+.stApp [data-testid="stExpander"] svg { fill: #ffffff; color: #ffffff; }
 """
 
 THEME_OPTIONS = ["System", "Light", "Dark"]
@@ -312,8 +281,8 @@ def theme_css(mode):
 
 
 def inject_css(mode="System"):
-    """Inject the global stylesheet, the lava lamp and the selected appearance."""
-    st.markdown(CSS + theme_css(mode) + LAVA_HTML, unsafe_allow_html=True)
+    """Inject the global stylesheet and the selected appearance."""
+    st.markdown(CSS + theme_css(mode), unsafe_allow_html=True)
     apply_matplotlib_theme()
 
 
@@ -365,7 +334,10 @@ def section(index, title, description=""):
 
 
 def stat_card(label, value, unit="", highlight=False):
-    """Return the HTML for one metric tile."""
-    cls = "stat hi" if highlight else "stat"
+    """Return the HTML for one metric tile.
+
+    ``highlight`` is accepted for backward compatibility but ignored: every
+    tile now uses the same style.
+    """
     unit_html = f"<small>{unit}</small>" if unit else ""
-    return f'<div class="{cls}"><div class="k">{label}</div><div class="v">{value}{unit_html}</div></div>'
+    return f'<div class="stat"><div class="k">{label}</div><div class="v">{value}{unit_html}</div></div>'
