@@ -143,18 +143,18 @@ def measure(image, compressed, singular_values, k):
 def render_header():
     st.markdown(
         """<div class="hero">
-<div class="eyebrow">Linear algebra · Image processing</div>
-<h1>SVD IMAGE COMPRESSOR</h1>
-<p>Compress images. Explore the mathematics.</p>
-<div class="formula">A = U Σ Vᵀ</div>
+<div class="eyebrow"><span class="eyebrow-dot"></span>Singular value decomposition</div>
+<h1>SVD <em>IMAGE</em> COMPRESSOR</h1>
+<p>Compress images. <span>Explore the mathematics.</span></p>
 </div>""",
         unsafe_allow_html=True,
     )
 
 
 def render_topbar():
-    """Top-right controls: appearance switch and GitHub link. Returns the mode."""
-    _, theme_col, github_col = st.columns([6.5, 2.6, 1.4], vertical_alignment="center")
+    """Appearance switch (left) and GitHub link (right). Returns the chosen mode."""
+    label_col, theme_col, _, github_col = st.columns([1.0, 3.4, 3.4, 1.4], vertical_alignment="center")
+    label_col.markdown('<span class="topbar-label">Appearance</span>', unsafe_allow_html=True)
     with theme_col:
         if hasattr(st, "segmented_control"):
             mode = st.segmented_control(
@@ -167,7 +167,17 @@ def render_topbar():
                 key="appearance", label_visibility="collapsed",
             )
     github_col.markdown(GITHUB_LINK, unsafe_allow_html=True)
+    st.markdown('<div class="topbar-rule"></div>', unsafe_allow_html=True)
     return mode or "System"
+
+
+def render_footer():
+    st.markdown(
+        '<div class="site-footer"><span>SVD IMAGE COMPRESSOR · A = UΣVᵀ</span>'
+        '<a href="https://github.com/AtharvChoudhary65" target="_blank" rel="noopener noreferrer">'
+        "github.com/AtharvChoudhary65</a></div>",
+        unsafe_allow_html=True,
+    )
 
 
 def render_rank_panel(max_rank, file_key):
@@ -220,7 +230,7 @@ def render_comparison(image, compressed, k, original_bytes, compressed_bytes):
 
 
 def render_svd_visual(singular_values, k, max_rank, m):
-    section(2, "The mathematics")
+    section(2, "The mathematics", "Only the largest singular values are kept; the rest are discarded.")
     with box("math"):
         st.markdown(
             '<div class="math-eq"><span class="dim">A</span> = U Σ Vᵀ'
@@ -263,7 +273,7 @@ def render_svd_visual(singular_values, k, max_rank, m):
 
 
 def render_metrics(original_bytes, compressed_bytes, m):
-    section(3, "Metrics")
+    section(3, "Metrics", "Measured on this image at the current rank.")
     cards = [
         stat_card("Original size", fmt_bytes(original_bytes)),
         stat_card("Compressed size", fmt_bytes(compressed_bytes)),
@@ -282,7 +292,7 @@ def render_metrics(original_bytes, compressed_bytes, m):
 
 
 def render_explainer():
-    section(4, "How SVD compresses")
+    section(4, "How SVD compresses", "From pixels to a low-rank approximation, in four steps.")
     st.markdown(
         """<div class="steps">
 <div class="step"><div class="n">01 · IMAGE</div><h4>Pixels become a matrix</h4>
@@ -299,7 +309,7 @@ def render_explainer():
 
 
 def render_download(compressed, k, file_key, name, compressed_bytes, size_ext):
-    section(5, "Download")
+    section(5, "Download", "Save the reconstruction at the rank you chose.")
     stem = os.path.splitext(name)[0]
     with box("download"):
         st.markdown(
@@ -415,7 +425,7 @@ def tab_analysis(image, max_rank, file_key):
 
 
 def render_experiments(image, max_rank, file_key):
-    section(6, "More experiments")
+    section(6, "More experiments", "Compare several ranks or sweep a whole range.")
     with box("experiments"):
         tab_cmp, tab_an = st.tabs(["Compare ranks", "Compression analysis"])
         with tab_cmp:
@@ -438,6 +448,7 @@ def main():
         help="JPG or PNG",
     )
     if uploaded is None:
+        render_footer()
         return
 
     file_key = f"{uploaded.name}-{uploaded.size}"
@@ -450,7 +461,7 @@ def main():
 
     max_rank = min(image.shape[:2])
 
-    section(1, "Experiment")
+    section(1, "Experiment", "Change the rank to find your balance between size and detail.")
     k = render_rank_panel(max_rank, file_key)
     st.write("")
 
@@ -480,6 +491,7 @@ def main():
     render_explainer()
     render_download(compressed, k, file_key, uploaded.name, compressed_bytes, size_ext)
     render_experiments(image, max_rank, file_key)
+    render_footer()
 
 
 if __name__ == "__main__":

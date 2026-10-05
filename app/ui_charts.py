@@ -89,13 +89,13 @@ def decomposition_svg(k, max_k):
     def label(x, w, text, y=top + s + 24):
         parts.append(
             f'<text x="{x + w / 2}" y="{y}" fill="{COLORS["muted"]}" '
-            f'font-family="JetBrains Mono, monospace" font-size="13" text-anchor="middle">{text}</text>'
+            f'font-family="DM Mono, monospace" font-size="13" text-anchor="middle">{text}</text>'
         )
 
     def op(x, text):
         parts.append(
             f'<text x="{x}" y="{top + s / 2 + 8}" fill="{COLORS["faint"]}" '
-            f'font-family="JetBrains Mono, monospace" font-size="24" text-anchor="middle">{text}</text>'
+            f'font-family="DM Mono, monospace" font-size="24" text-anchor="middle">{text}</text>'
         )
 
     # A (full image matrix)
