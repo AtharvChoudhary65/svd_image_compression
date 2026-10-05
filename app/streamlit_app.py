@@ -37,7 +37,7 @@ from src.visualization import (
 )
 
 from ui_charts import decomposition_svg, spectrum_figure
-from ui_theme import inject_css, section, stat_card
+from ui_theme import GITHUB_LINK, THEME_OPTIONS, inject_css, section, stat_card
 
 RESULT_DIR = os.path.join("results", "reconstructed")
 # Longest side used for the interactive session. Each new rank costs one SVD per
@@ -45,7 +45,6 @@ RESULT_DIR = os.path.join("results", "reconstructed")
 MAX_SIDE = 1280
 
 st.set_page_config(page_title="SVD Image Compressor", page_icon="◰", layout="wide")
-inject_css()
 
 
 # --------------------------------------------------------------------------- #
@@ -58,6 +57,14 @@ def fmt_bytes(n):
         if n < 1024 or unit == "GB":
             return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
         n /= 1024
+
+
+def box(key, parent=st):
+    """Bordered glass container. The key gives CSS a stable hook across versions."""
+    try:
+        return parent.container(border=True, key=f"box_{key}")
+    except TypeError:  # older Streamlit without container keys
+        return parent.container(border=True)
 
 
 def show_image(data, **kwargs):
@@ -145,19 +152,27 @@ def render_header():
     )
 
 
-def render_empty_state():
-    st.markdown(
-        """<div class="steps-mini">
-<div><b>01</b>Upload</div><div><b>02</b>Experiment</div>
-<div><b>03</b>Understand</div><div><b>04</b>Download</div>
-</div>""",
-        unsafe_allow_html=True,
-    )
+def render_topbar():
+    """Top-right controls: appearance switch and GitHub link. Returns the mode."""
+    _, theme_col, github_col = st.columns([6.5, 2.6, 1.4], vertical_alignment="center")
+    with theme_col:
+        if hasattr(st, "segmented_control"):
+            mode = st.segmented_control(
+                "Appearance", THEME_OPTIONS, default="System",
+                key="appearance", label_visibility="collapsed",
+            )
+        else:  # older Streamlit
+            mode = st.radio(
+                "Appearance", THEME_OPTIONS, horizontal=True,
+                key="appearance", label_visibility="collapsed",
+            )
+    github_col.markdown(GITHUB_LINK, unsafe_allow_html=True)
+    return mode or "System"
 
 
 def render_rank_panel(max_rank, file_key):
     """Primary interaction. Returns the selected rank."""
-    with st.container(border=True):
+    with box("rank"):
         left, right = st.columns([1, 2.6], vertical_alignment="center")
         slider_slot = right.empty()
         k = slider_slot.slider(
@@ -188,14 +203,14 @@ def render_rank_panel(max_rank, file_key):
 
 def render_comparison(image, compressed, k, original_bytes, compressed_bytes):
     left, right = st.columns(2, gap="medium")
-    with left.container(border=True):
+    with box("orig", left):
         st.markdown(
             f'<div class="img-head"><span class="tag">Original</span>'
             f'<span class="size">{fmt_bytes(original_bytes)}</span></div>',
             unsafe_allow_html=True,
         )
         show_image(image)
-    with right.container(border=True):
+    with box("comp", right):
         st.markdown(
             f'<div class="img-head"><span class="tag">Compressed · rank <b>{k}</b></span>'
             f'<span class="size">{fmt_bytes(compressed_bytes)}</span></div>',
@@ -206,7 +221,7 @@ def render_comparison(image, compressed, k, original_bytes, compressed_bytes):
 
 def render_svd_visual(singular_values, k, max_rank, m):
     section(2, "The mathematics")
-    with st.container(border=True):
+    with box("math"):
         st.markdown(
             '<div class="math-eq"><span class="dim">A</span> = U Σ Vᵀ'
             '<span class="dim">  →  </span>'
@@ -219,7 +234,7 @@ def render_svd_visual(singular_values, k, max_rank, m):
 
     st.write("")
     chart_col, info_col = st.columns([1.7, 1], gap="medium")
-    with chart_col.container(border=True):
+    with box("spectrum", chart_col):
         st.markdown('<div class="img-head"><span class="tag">Singular value spectrum</span></div>',
                     unsafe_allow_html=True)
         fig = spectrum_figure(singular_values, k)
@@ -286,7 +301,7 @@ def render_explainer():
 def render_download(compressed, k, file_key, name, compressed_bytes, size_ext):
     section(5, "Download")
     stem = os.path.splitext(name)[0]
-    with st.container(border=True):
+    with box("download"):
         st.markdown(
             '<p class="ready">Your compressed image is ready.</p>'
             f'<p class="ready-sub">Rank {k} reconstruction · {size_ext[1:].upper()} {fmt_bytes(compressed_bytes)}</p>',
@@ -401,17 +416,19 @@ def tab_analysis(image, max_rank, file_key):
 
 def render_experiments(image, max_rank, file_key):
     section(6, "More experiments")
-    tab_cmp, tab_an = st.tabs(["Compare ranks", "Compression analysis"])
-    with tab_cmp:
-        tab_compare(image, max_rank, file_key)
-    with tab_an:
-        tab_analysis(image, max_rank, file_key)
+    with box("experiments"):
+        tab_cmp, tab_an = st.tabs(["Compare ranks", "Compression analysis"])
+        with tab_cmp:
+            tab_compare(image, max_rank, file_key)
+        with tab_an:
+            tab_analysis(image, max_rank, file_key)
 
 
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 def main():
+    inject_css(render_topbar())
     render_header()
 
     uploaded = st.file_uploader(
@@ -421,7 +438,6 @@ def main():
         help="JPG or PNG",
     )
     if uploaded is None:
-        render_empty_state()
         return
 
     file_key = f"{uploaded.name}-{uploaded.size}"

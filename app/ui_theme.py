@@ -35,6 +35,11 @@ CSS = """
   --faint: #4A5062;
   --accent: #6C7DFF;
   --accent-soft: rgba(108,125,255,0.16);
+  --accent-box: rgba(108,125,255,0.16);
+  --o-text: #E9ECF4;
+  --o-muted: #8B93A7;
+  --o-faint: #4A5062;
+  --o-border: rgba(255,255,255,0.09);
   --radius: 14px;
   --gap: 24px;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -62,21 +67,22 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
   color: var(--accent); text-transform: uppercase; margin-bottom: 0.9rem;
 }
 .hero h1 {
+  color: var(--o-text);
   font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 700; margin: 0;
   letter-spacing: 0.02em; line-height: 1.1; padding: 0;
 }
-.hero p { color: var(--muted); font-size: 1.05rem; margin: 0.9rem 0 0; }
+.hero p { color: var(--o-muted); font-size: 1.05rem; margin: 0.9rem 0 0; }
 .hero .formula {
-  font-family: var(--mono); color: var(--faint); font-size: 0.85rem; margin-top: 1.4rem;
+  font-family: var(--mono); color: var(--o-faint); font-size: 0.85rem; margin-top: 1.4rem;
 }
 
 /* ---- Section headings ---- */
 .section-label {
   font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.22em;
-  color: var(--muted); text-transform: uppercase; margin: 3rem 0 1rem;
+  color: var(--o-muted); text-transform: uppercase; margin: 3rem 0 1rem;
   display: flex; align-items: center; gap: 0.9rem;
 }
-.section-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--o-border); }
 .section-label .idx { color: var(--accent); }
 
 /* ---- Glass panels ---- */
@@ -89,7 +95,7 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
   box-shadow: 0 10px 40px rgba(0,0,0,0.35);
   padding: 1.4rem 1.5rem;
 }
-[data-testid="stVerticalBlockBorderWrapper"] {
+:is([data-testid="stVerticalBlockBorderWrapper"], [class*="st-key-box_"]) {
   background: var(--panel);
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
@@ -110,7 +116,7 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
 }
 [data-testid="stFileUploaderDropzone"]:hover {
   border-color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--accent-box);
   box-shadow: 0 0 0 4px rgba(108,125,255,0.08);
 }
 [data-testid="stFileUploaderDropzone"] button {
@@ -149,9 +155,9 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
 .stat .k { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
 .stat .v { font-family: var(--mono); font-size: 1.7rem; font-weight: 500; margin-top: 0.55rem; color: var(--text); }
 .stat .v small { font-size: 0.85rem; color: var(--muted); margin-left: 0.25rem; }
-.stat.hi { border-color: rgba(108,125,255,0.45); background: var(--accent-soft); }
+.stat.hi { border-color: rgba(108,125,255,0.45); background: var(--accent-box); }
 .stat.hi .v { color: var(--accent); }
-.footnote { color: var(--faint); font-size: 0.8rem; margin-top: 0.9rem; }
+.footnote { color: var(--o-muted); font-size: 0.8rem; margin-top: 0.9rem; }
 
 /* ---- Rank -> information -> quality chain ---- */
 .chain { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 12px; }
@@ -204,10 +210,21 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
   background: var(--panel-strong); border-radius: 8px; font-family: var(--mono);
 }
 
-/* ---- Empty state ---- */
-.steps-mini { display: flex; justify-content: center; gap: 2.2rem; flex-wrap: wrap; margin-top: 2.2rem; }
-.steps-mini div { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.14em; color: var(--faint); text-transform: uppercase; }
-.steps-mini b { color: var(--accent); margin-right: 0.5rem; font-weight: 600; }
+/* ---- Top bar: theme switch + GitHub ---- */
+.topbar-right { display: flex; justify-content: flex-end; }
+a.gh-link, a.gh-link:visited {
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text) !important; text-decoration: none !important;
+  font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.06em;
+  padding: 0.5rem 0.9rem; transition: border-color .2s ease;
+}
+a.gh-link:hover { border-color: var(--accent); }
+a.gh-link svg { width: 16px; height: 16px; fill: currentColor; }
+[data-testid="stButtonGroup"] { justify-content: flex-end; }
+[data-testid="stButtonGroup"] button, [data-testid="stRadio"] label {
+  font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em;
+}
 
 /* ---- Small screens ---- */
 @media (max-width: 640px) {
@@ -219,10 +236,50 @@ h1, h2, h3, h4 { font-family: var(--sans); letter-spacing: -0.01em; }
 """
 
 
-def inject_css():
-    """Inject the global stylesheet and align matplotlib with the dark theme."""
-    st.markdown(CSS, unsafe_allow_html=True)
+# Light mode: white page, dark boxes. Only on-page text flips; box contents stay light.
+LIGHT_RULES = """
+:root {
+  --o-text: #0B0D12; --o-muted: #50586B; --o-faint: #8A91A3; --o-border: rgba(11,13,18,0.14);
+  --panel: #0D0F15; --panel-strong: #1A1D26; --accent-box: #151A38;
+}
+.stApp { background: #FFFFFF !important; }
+.stApp [data-testid="stSpinner"], .stApp [data-testid="stSpinner"] * { color: var(--o-text); }
+.stApp [data-testid="stCaptionContainer"] { color: var(--o-muted); }
+.stApp :is([data-testid="stVerticalBlockBorderWrapper"], [class*="st-key-box_"]) [data-testid="stCaptionContainer"] { color: #8B93A7; }
+.stApp [data-testid="stFileUploaderDropzone"] { background: #0D0F15; }
+.stApp [data-testid="stButtonGroup"] button { background: #0D0F15; border-color: rgba(255,255,255,0.12); }
+"""
+
+THEME_OPTIONS = ["System", "Light", "Dark"]
+
+
+def theme_css(mode):
+    """Extra CSS for the chosen appearance: 'System', 'Light' or 'Dark'."""
+    if mode == "Light":
+        return f"<style>{LIGHT_RULES}</style>"
+    if mode == "System":
+        return f"<style>@media (prefers-color-scheme: light) {{{LIGHT_RULES}}}</style>"
+    return ""
+
+
+def inject_css(mode="System"):
+    """Inject the global stylesheet plus the selected appearance."""
+    st.markdown(CSS + theme_css(mode), unsafe_allow_html=True)
     apply_matplotlib_theme()
+
+
+GITHUB_URL = "https://github.com/AtharvChoudhary65"
+GITHUB_LINK = (
+    f'<div class="topbar-right"><a class="gh-link" href="{GITHUB_URL}" target="_blank" '
+    'rel="noopener noreferrer" aria-label="GitHub profile">'
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 '
+    '5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94'
+    '-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87'
+    '.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 '
+    '2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12'
+    '.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 '
+    '.21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></div>'
+)
 
 
 def apply_matplotlib_theme():
